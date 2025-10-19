@@ -30,7 +30,9 @@ class QListWidget;
 class QListWidgetItem;
 class QCheckBox;
 class QVBoxLayout;
+#if EXTERNAL_DATA_TOOLS
 class QProcess;
+#endif
 class QRegExpValidator;
 class QComboBox;
 class QucsApp;
@@ -84,7 +86,9 @@ private:
   int         currentPrep;
 
   QTextStream *prestream;
+#if EXTERNAL_DATA_TOOLS
   QProcess *QucsConv, *SpicePrep;
+#endif
   QString Line, Error;  // to store the text read from QucsConv
   int textStatus; // to store with text data QucsConv will sent next
 

@@ -9,6 +9,11 @@ if(WITH_NGSPICE_SHARED AND NGSPICE_INCLUDE_DIR)
     INCLUDE_DIRECTORIES(${NGSPICE_INCLUDE_DIR})
 endif()
 
+# Modern CMake: also add as target include directory so consumers of extsimkernels get it
+if(WITH_NGSPICE_SHARED AND NGSPICE_INCLUDE_DIR)
+    set(NGSPICE_INCLUDE_DIRS_FOR_TARGETS ${NGSPICE_INCLUDE_DIR})
+endif()
+
 #INCLUDES = $(X11_INCLUDES) $(QT_INCLUDES) -I$(top_srcdir)/qucs
 
 SET(EXTSIMKERNELS_HDRS
@@ -81,6 +86,11 @@ ADD_LIBRARY(extsimkernels STATIC ${EXTSIMKERNELS_HDRS} ${EXTSIMKERNELS_SRCS} ${E
 if(WITH_NGSPICE_SHARED AND NGSPICE_LIBRARY)
     target_link_libraries(extsimkernels PUBLIC ${NGSPICE_LIBRARY})
     message(STATUS "Linking extsimkernels with ngspice shared library: ${NGSPICE_LIBRARY}")
+endif()
+
+# Export ngspice include directory to consumers of extsimkernels library
+if(WITH_NGSPICE_SHARED AND NGSPICE_INCLUDE_DIR)
+    target_include_directories(extsimkernels PUBLIC ${NGSPICE_INCLUDE_DIR})
 endif()
 
 

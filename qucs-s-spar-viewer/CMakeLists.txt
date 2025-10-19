@@ -228,7 +228,17 @@ ADD_EXECUTABLE( ${QUCS_NAME}spar-viewer MACOSX_BUNDLE WIN32
   Misc/readTouchstone.cpp
 )
 
-TARGET_LINK_LIBRARIES( ${QUCS_NAME}spar-viewer Qt6::Core Qt6::Gui Qt6::Widgets Qt6::PrintSupport)
+TARGET_LINK_LIBRARIES( ${QUCS_NAME}spar-viewer PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::PrintSupport)
+
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME}spar-viewer)
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME}spar-viewer)
+
 SET_TARGET_PROPERTIES(${QUCS_NAME}spar-viewer PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 #INSTALL (TARGETS ${QUCS_NAME}spar-viewer DESTINATION bin)
 #

@@ -51,9 +51,52 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(QT_NO_DEBUG_OUTPUT)
 endif()
 
+# Function to configure embind linkage for WebAssembly executables
+# This ensures all Qt applications link against embind for JavaScript interop
+# IMPORTANT: This must be called AFTER qt_finalize_target() to avoid CMake signature conflicts
+function(configure_wasm_executable target_name)
+    if(EMSCRIPTEN)
+        message(STATUS "Configuring WebAssembly embind linkage for ${target_name}")
+
+        # Enable embind support via --bind compiler/linker flag
+        # This activates Emscripten's C++ to JavaScript binding system
+        target_compile_options(${target_name} PRIVATE "SHELL:--bind")
+        target_link_options(${target_name} PRIVATE "SHELL:--bind")
+
+        # Enable asyncify to support blocking calls like QDialog::exec()
+        # This allows synchronous Qt APIs to work in WebAssembly
+        target_link_options(${target_name} PRIVATE "SHELL:-sASYNCIFY")
+        target_link_options(${target_name} PRIVATE "SHELL:-sASYNCIFY_STACK_SIZE=65536")
+
+        # Enable assertions for better error messages during development
+        target_link_options(${target_name} PRIVATE "SHELL:-sASSERTIONS")
+
+        # Disable optimization for faster builds during development
+        target_compile_options(${target_name} PRIVATE -O0)
+        target_link_options(${target_name} PRIVATE -O0)
+
+        # Force inclusion of all symbols from Qt6::Core to ensure embind EMSCRIPTEN_BINDINGS
+        # static constructors are linked. Qt's embind bindings are in qstdweb.cpp and other
+        # WebAssembly platform files, and without --whole-archive these static constructors
+        # that register types with embind won't be included.
+        target_link_options(${target_name} PRIVATE
+            "SHELL:-Wl,--whole-archive"
+            "$<TARGET_FILE:Qt6::Core>"
+            "SHELL:-Wl,--no-whole-archive"
+        )
+    endif()
+endfunction()
+
 # Simulator backend options
 option(WITH_NGSPICE_SHARED "Enable ngspice shared library support" OFF)
-option(WITH_EXTERNAL_SIMULATORS "Enable external simulator support (QProcess-based)" ON)
+
+# External process categories
+option(WITH_EXTERNAL_SIMULATORS "Enable external SPICE simulators (ngspice, xyce)" ON)
+option(WITH_EXTERNAL_DATA_TOOLS "Enable external data conversion tools" ON)
+option(WITH_EXTERNAL_POSTPROCESSING "Enable Octave/external post-processing" ON)
+option(WITH_EXTERNAL_DESIGN_TOOLS "Enable external design utility tools" ON)
+option(WITH_EXTERNAL_BUILD_TOOLS "Enable Verilog-A compilation tools" ON)
+option(WITH_EXTERNAL_EDITORS "Enable external text editor support" ON)
 
 if(WITH_NGSPICE_SHARED)
     find_library(NGSPICE_LIBRARY NAMES ngspice libngspice)
@@ -72,12 +115,53 @@ else()
     set(NGSPICE_SHARED 0)
 endif()
 
+# Configure external process support flags
 if(WITH_EXTERNAL_SIMULATORS)
     set(EXTERNAL_SIMULATORS 1)
     message(STATUS "External simulator support enabled")
 else()
     set(EXTERNAL_SIMULATORS 0)
     message(STATUS "External simulator support disabled")
+endif()
+
+if(WITH_EXTERNAL_DATA_TOOLS)
+    set(EXTERNAL_DATA_TOOLS 1)
+    message(STATUS "External data tools enabled")
+else()
+    set(EXTERNAL_DATA_TOOLS 0)
+    message(STATUS "External data tools disabled")
+endif()
+
+if(WITH_EXTERNAL_POSTPROCESSING)
+    set(EXTERNAL_POSTPROCESSING 1)
+    message(STATUS "External post-processing tools enabled")
+else()
+    set(EXTERNAL_POSTPROCESSING 0)
+    message(STATUS "External post-processing tools disabled")
+endif()
+
+if(WITH_EXTERNAL_DESIGN_TOOLS)
+    set(EXTERNAL_DESIGN_TOOLS 1)
+    message(STATUS "External design tools enabled")
+else()
+    set(EXTERNAL_DESIGN_TOOLS 0)
+    message(STATUS "External design tools disabled")
+endif()
+
+if(WITH_EXTERNAL_BUILD_TOOLS)
+    set(EXTERNAL_BUILD_TOOLS 1)
+    message(STATUS "External build tools enabled")
+else()
+    set(EXTERNAL_BUILD_TOOLS 0)
+    message(STATUS "External build tools disabled")
+endif()
+
+if(WITH_EXTERNAL_EDITORS)
+    set(EXTERNAL_EDITORS 1)
+    message(STATUS "External editor support enabled")
+else()
+    set(EXTERNAL_EDITORS 0)
+    message(STATUS "External editor support disabled")
 endif()
 
 enable_testing()

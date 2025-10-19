@@ -34,7 +34,9 @@ class Schematic;
 class SimMessage;
 class MouseActions;
 class SearchDialog;
+#if EXTERNAL_POSTPROCESSING
 class OctaveWindow;
+#endif
 class MessageDock;
 class ProjectView;
 class ContextMenuTabWidget;
@@ -247,8 +249,10 @@ private:
 // ********* Widgets on the main area **********************************
   QDockWidget     *dock;
   QTabWidget      *TabView;
+#if EXTERNAL_POSTPROCESSING
   QDockWidget     *octDock;
   OctaveWindow    *octave;
+#endif
   MessageDock     *messageDock;
 
   QListView       *Projects;

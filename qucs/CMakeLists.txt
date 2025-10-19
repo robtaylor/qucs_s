@@ -138,7 +138,7 @@ ADD_SUBDIRECTORY( extsimkernels )
 ADD_SUBDIRECTORY( spicecomponents )
 
 SET(QUCS_SRCS
-  element.cpp	octave_window.cpp	qucsdoc.cpp
+  element.cpp	qucsdoc.cpp
   textdoc.cpp  main.cpp	schematic.cpp
   mnemo.cpp	qucs.cpp healer.cpp
   module.cpp	schematic_element.cpp	wire.cpp schematic_render.cpp
@@ -146,9 +146,17 @@ SET(QUCS_SRCS
   wirelabel.cpp node.cpp qucs_init.cpp
   syntax.cpp misc.cpp messagedock.cpp
   settings.cpp
-  imagewriter.cpp printerwriter.cpp projectView.cpp
+  printerwriter.cpp projectView.cpp
   symbolwidget.cpp wire_planner.cpp
 )
+
+# Files that require QProcess for post-processing tools
+if(WITH_EXTERNAL_POSTPROCESSING)
+  list(APPEND QUCS_SRCS
+    octave_window.cpp
+    imagewriter.cpp
+  )
+endif()
 
 SET(QUCS_HDRS
 element.h
@@ -161,7 +169,6 @@ mnemo.h
 module.h
 mouseactions.h
 node.h
-octave_window.h
 qucs.h
 qucsdoc.h
 schematic.h
@@ -174,11 +181,15 @@ wirelabel.h
 wire_planner.h
 )
 
+# Headers that require QProcess for post-processing tools
+if(WITH_EXTERNAL_POSTPROCESSING)
+  list(APPEND QUCS_HDRS octave_window.h)
+endif()
+
 #
 # files that have Q_OBJECT need to be MOC'ed
 #
 SET(QUCS_MOC_HDRS
-  octave_window.h
   qucs.h
   schematic.h
   textdoc.h
@@ -186,6 +197,11 @@ SET(QUCS_MOC_HDRS
   projectView.h
   symbolwidget.h
 )
+
+# MOC headers that require QProcess for post-processing tools
+if(WITH_EXTERNAL_POSTPROCESSING)
+  list(APPEND QUCS_MOC_HDRS octave_window.h)
+endif()
 
 # headers that need to be moc'ed
 # generate rules for building source files from bitmap resources
@@ -261,10 +277,21 @@ ADD_EXECUTABLE( ${QUCS_NAME} MACOSX_BUNDLE WIN32
 
 #
 # Tell CMake which libraries we need to link our executable against.
+# Use PRIVATE keyword signature for compatibility with qt_finalize_target
 #
-TARGET_LINK_LIBRARIES( ${QUCS_NAME}
+TARGET_LINK_LIBRARIES( ${QUCS_NAME} PRIVATE
     components diagrams dialogs geometry paintings extsimkernels spicecomponents magnetics qt3_compat
     Qt6::Core  Qt6::Gui  Qt6::Widgets Qt6::Svg  Qt6::SvgWidgets Qt6::Xml  Qt6::PrintSupport )
+
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME})
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME})
+
 SET_TARGET_PROPERTIES(${QUCS_NAME} PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 #
 # Prepare the installation

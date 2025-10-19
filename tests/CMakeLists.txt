@@ -26,6 +26,12 @@ target_link_libraries(test_ngspice_integration
 # Enable Qt Test automoc
 set_target_properties(test_ngspice_integration PROPERTIES AUTOMOC ON)
 
+# Apply Qt's WebAssembly-specific finalization and embind configuration
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(test_ngspice_integration)
+endif()
+configure_wasm_executable(test_ngspice_integration)
+
 # Add to CTest
 add_test(NAME NgspiceIntegration COMMAND test_ngspice_integration)
 
@@ -50,6 +56,12 @@ target_link_libraries(test_ngspice_kernel
 # Enable Qt Test automoc
 set_target_properties(test_ngspice_kernel PROPERTIES AUTOMOC ON)
 
+# Apply Qt's WebAssembly-specific finalization and embind configuration
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(test_ngspice_kernel)
+endif()
+configure_wasm_executable(test_ngspice_kernel)
+
 # Add to CTest
 add_test(NAME NgspiceKernel COMMAND test_ngspice_kernel)
 
@@ -71,6 +83,12 @@ target_link_libraries(test_simulation_types
 
 # Enable Qt Test automoc
 set_target_properties(test_simulation_types PROPERTIES AUTOMOC ON)
+
+# Apply Qt's WebAssembly-specific finalization and embind configuration
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(test_simulation_types)
+endif()
+configure_wasm_executable(test_simulation_types)
 
 # Add to CTest
 add_test(NAME SimulationTypes COMMAND test_simulation_types)

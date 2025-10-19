@@ -45,7 +45,9 @@
 #include "main.h"
 #include "node.h"
 #include "printerwriter.h"
+#if EXTERNAL_POSTPROCESSING
 #include "imagewriter.h"
+#endif
 #include "schematic.h"
 #include "settings.h"
 #include "module.h"
@@ -585,8 +587,13 @@ int doPrint(QString schematicFileName, QString printFile,
     }
     else
     {
+#if EXTERNAL_POSTPROCESSING
         ImageWriter *Printer = new ImageWriter("");
         Printer->noGuiPrint(schematic.get(), printFile, color);
+#else
+        fprintf(stderr, "Error: Image export requires external postprocessing tools (not available in this build)\n");
+        return -1;
+#endif
     }
 
     return 0;

@@ -107,7 +107,17 @@ ADD_EXECUTABLE( ${QUCS_NAME}attenuator MACOSX_BUNDLE WIN32
   ${attenuator_moc_sources}
   ${RESOURCES_SRCS} )
 
-TARGET_LINK_LIBRARIES( ${QUCS_NAME}attenuator Qt6::Core Qt6::Gui Qt6::Widgets )
+TARGET_LINK_LIBRARIES( ${QUCS_NAME}attenuator PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets )
+
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME}attenuator)
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME}attenuator)
+
 SET_TARGET_PROPERTIES(${QUCS_NAME}attenuator PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 #INSTALL (TARGETS ${QUCS_NAME}attenuator DESTINATION bin)
 #

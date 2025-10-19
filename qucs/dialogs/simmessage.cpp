@@ -32,7 +32,9 @@
 #include <QTextStream>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#if EXTERNAL_SIMULATORS
 #include <QProcess>
+#endif
 #include <QProgressBar>
 #include <QDebug>
 #include <QMessageBox>
@@ -144,13 +146,26 @@ SimMessage::SimMessage(QWidget *w, QWidget *parent)
  */
 SimMessage::~SimMessage()
 {
+#if EXTERNAL_SIMULATORS
   if(SimProcess.state()==QProcess::Running)  SimProcess.kill();
+#endif
   delete all;
 }
 
 // ------------------------------------------------------------------------
 bool SimMessage::startProcess()
 {
+#if !EXTERNAL_SIMULATORS
+  Abort->setText(tr("Abort simulation"));
+  Display->setDisabled(true);
+
+  ProgText->clear();
+  ErrText->clear();
+
+  ErrText->appendPlainText(tr("ERROR: External simulators not supported in this build!"));
+  FinishSimulation(-1);
+  return false;
+#else
   Abort->setText(tr("Abort simulation"));
   Display->setDisabled(true);
 
@@ -206,8 +221,10 @@ bool SimMessage::startProcess()
   return true;
   // Since now, the Doc pointer may be obsolete, as the user could have
   // closed the schematic !!!
+#endif // EXTERNAL_SIMULATORS
 }
 
+#if EXTERNAL_SIMULATORS
 /*!
  * \brief Converts a spice netlist into Qucs format and outputs it.
  */
@@ -883,8 +900,34 @@ void SimMessage::AbortSim()
 {
   ErrText->appendPlainText(tr("Simulation aborted by the user!"));
   simKilled = true;
+#if EXTERNAL_SIMULATORS
   SimProcess.kill();
+#endif
 }
+
+Component * SimMessage::findOptimization(Schematic *Doc) {
+  for(Component* pc : *Doc->a_Components)
+    if(pc->isActive)
+      if(pc->Model == ".Opt")
+	return pc;
+  return nullptr;
+}
+
+#else
+// Stub implementations when EXTERNAL_SIMULATORS is disabled
+void SimMessage::nextSPICE() {}
+void SimMessage::slotCloseStdin() {}
+void SimMessage::slotReadSpiceNetlist() {}
+void SimMessage::slotFinishSpiceNetlist(int) {}
+void SimMessage::startSimulator() {}
+void SimMessage::slotDisplayMsg() {}
+void SimMessage::slotDisplayErr() {}
+Component* SimMessage::findOptimization(Schematic *) { return nullptr; }
+void SimMessage::FinishSimulation(int) {}
+void SimMessage::slotClose() { accept(); }
+void SimMessage::slotDisplayButton() { emit displayDataPage(DocName, DataDisplay); accept(); }
+void SimMessage::AbortSim() {}
+#endif // EXTERNAL_SIMULATORS
 
 /* \brief Allows the doc Widget to be set after the constructor
  *

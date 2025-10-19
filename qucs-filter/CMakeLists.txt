@@ -142,7 +142,17 @@ ADD_EXECUTABLE(${QUCS_NAME}filter MACOSX_BUNDLE WIN32
   ${QUCS-FILTER_MOC_SRCS}
   ${RESOURCES_SRCS} )
 
-TARGET_LINK_LIBRARIES(${QUCS_NAME}filter Qt6::Core Qt6::Gui Qt6::Widgets)
+TARGET_LINK_LIBRARIES(${QUCS_NAME}filter PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME}filter)
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME}filter)
+
 SET_TARGET_PROPERTIES(${QUCS_NAME}filter PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 INSTALL(TARGETS ${QUCS_NAME}filter

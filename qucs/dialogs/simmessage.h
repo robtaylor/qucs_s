@@ -19,7 +19,9 @@
 #define SIMMESSAGE_H
 
 #include <QDialog>
+#if EXTERNAL_SIMULATORS
 #include <QProcess>
+#endif
 #include <QStringList>
 #include <QFile>
 #include <QTextStream>
@@ -59,8 +61,10 @@ private slots:
   void slotDisplayMsg();
   void slotDisplayErr();
   void slotCloseStdin();
+#if EXTERNAL_SIMULATORS
   void slotStateChanged(QProcess::ProcessState newState);
   void slotSimEnded(int exitCode, QProcess::ExitStatus exitStatus);
+#endif
   void slotDisplayButton();
   void AbortSim();
 
@@ -88,7 +92,9 @@ public:
   bool SimRunScript;
   QString DocName, DataSet, DataDisplay, Script;
 
+#if EXTERNAL_SIMULATORS
   QProcess       SimProcess;
+#endif
   QPlainTextEdit *ProgText, *ErrText;
   bool           wasLF;   // linefeed for "ProgText"
   bool           simKilled; // true if simulation was aborted by the user

@@ -30,7 +30,9 @@
 #include <QFileDialog>
 #include <QPushButton>
 #include <QCheckBox>
+#if EXTERNAL_DATA_TOOLS
 #include <QProcess>
+#endif
 #include <QMessageBox>
 #include <QComboBox>
 #include <QTextStream>
@@ -377,6 +379,7 @@ bool SpiceDialog::loadSpiceNetList(const QString& s)
   textStatus = 0;
   Line = Error = "";
 
+#if EXTERNAL_DATA_TOOLS
   QString preprocessor = PrepCombo->currentText();
   if (preprocessor != "none")
   {
@@ -474,7 +477,9 @@ bool SpiceDialog::loadSpiceNetList(const QString& s)
     }
     FileInfo = QFileInfo(QucsSettings.QucsWorkDir, absFileName + ".pre");
   }
+#endif // EXTERNAL_SIMULATORS
 
+#if EXTERNAL_DATA_TOOLS
   if (QucsSettings.DefaultSimulator == spicecompat::simQucsator) {
       // Now do the spice->qucs netlist conversion using the qucsconv program ...
       QucsConv = new QProcess(this);
@@ -509,7 +514,9 @@ bool SpiceDialog::loadSpiceNetList(const QString& s)
       }
 
       MBox->exec();
-  } else { // Parse SUBCIRCUIT header directly
+  } else
+#endif // EXTERNAL_SIMULATORS
+  { // Parse SUBCIRCUIT header directly
       QStringList lst;
       QString compname = spicecompat::getSubcktName(FileInfo.filePath());
       spicecompat::getPins(FileInfo.filePath(),compname,lst);
@@ -548,6 +555,7 @@ bool SpiceDialog::loadSpiceNetList(const QString& s)
 }
 
 // -------------------------------------------------------------------------
+#if EXTERNAL_DATA_TOOLS
 void SpiceDialog::slotSkipErr()
 {
   SpicePrep->readAllStandardError ();
@@ -654,6 +662,15 @@ void SpiceDialog::slotGetNetlist()
     }
   }
 }
+#else
+// Stub implementations when EXTERNAL_DATA_TOOLS is disabled
+void SpiceDialog::slotSkipErr() {}
+void SpiceDialog::slotSkipOut() {}
+void SpiceDialog::slotGetPrepErr() {}
+void SpiceDialog::slotGetPrepOut() {}
+void SpiceDialog::slotGetError() {}
+void SpiceDialog::slotGetNetlist() {}
+#endif // EXTERNAL_DATA_TOOLS
 
 // -------------------------------------------------------------------------
 void SpiceDialog::slotButtEdit()

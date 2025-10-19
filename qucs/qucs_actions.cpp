@@ -24,7 +24,9 @@
 #include <QtCore>
 #include <stdlib.h>
 
+#if EXTERNAL_SIMULATORS || EXTERNAL_DESIGN_TOOLS || EXTERNAL_BUILD_TOOLS || EXTERNAL_EDITORS
 #include <QProcess>
+#endif
 #include <QRegularExpressionValidator>
 #include <QLineEdit>
 #include <QAction>
@@ -750,6 +752,7 @@ void QucsApp::editFile(const QString& File, bool reloadFile)
           args << File;
       }
 
+#if EXTERNAL_EDITORS
       QProcess *QucsEditor = new QProcess();
       QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
       env.insert("PATH", env.value("PATH") );
@@ -768,6 +771,9 @@ void QucsApp::editFile(const QString& File, bool reloadFile)
 
       // to kill it before qucs ends
       connect(this, SIGNAL(signalKillEmAll()), QucsEditor, SLOT(kill()));
+#else
+      QMessageBox::critical(this, tr("Error"), tr("External editor not available (external editors disabled)"));
+#endif
     }
 }
 
@@ -910,6 +916,7 @@ void QucsApp::slotCallSPAR_Viewer()
 void QucsApp::launchTool(const QString& prog, const QString& progDesc, const QStringList &args,
                          bool qucs_tool)
 {
+#if EXTERNAL_DESIGN_TOOLS
     QString tooldir = qucs_tool ? QucsSettings.QucsatorDir : QucsSettings.BinDir;
 
     // Create command path based on the platform
@@ -944,11 +951,16 @@ void QucsApp::launchTool(const QString& prog, const QString& progDesc, const QSt
 
     // to kill the application first before qucs finishes exiting
     connect(this, SIGNAL(signalKillEmAll()), tool, SLOT(kill()));
+#else
+    QMessageBox::critical(this, tr("Error"),
+                        tr("External design tools not available (external design tools disabled)"));
+#endif
 }
 
 
 void QucsApp::slotCallRFLayout()
 {
+#if EXTERNAL_DESIGN_TOOLS
     QString input_file, netlist_file, odir;
     if (!isTextDocument(DocumentTab->currentWidget())) {
         Schematic *sch = (Schematic*)DocumentTab->currentWidget();
@@ -1003,6 +1015,10 @@ void QucsApp::slotCallRFLayout()
       return;
     }
     connect(this, SIGNAL(signalKillEmAll()), tool, SLOT(kill()));
+#else
+    QMessageBox::critical(this, tr("Error"),
+                        tr("RF Layout tool not available (external design tools disabled)"));
+#endif
 }
 
 // --------------------------------------------------------------
@@ -1651,6 +1667,7 @@ void QucsApp::slotLoadModule()
  */
 void QucsApp::slotBuildModule()
 {
+#if EXTERNAL_BUILD_TOOLS
     qDebug() << "slotBuildModule";
 
     // reset message dock on entry
@@ -1765,12 +1782,17 @@ void QucsApp::slotBuildModule()
 
     // shot the message docks
     messageDock->msgDock->show();
+#else
+    QMessageBox::critical(this, tr("Error"),
+                        tr("Build tools not available (external build tools disabled)"));
+#endif
 
 }
 
 
 void QucsApp::buildWithOpenVAF()
 {
+#if EXTERNAL_BUILD_TOOLS
     messageDock->builderTabs->setTabIcon(0,QPixmap());
     messageDock->builderTabs->setTabText(0,tr("OpenVAF"));
     messageDock->msgDock->setWindowTitle(tr("OpenVAF Dock"));
@@ -1820,6 +1842,10 @@ void QucsApp::buildWithOpenVAF()
 
     // shot the message docks
     messageDock->msgDock->show();
+#else
+    QMessageBox::critical(this, tr("Error"),
+                        tr("Build tools not available (external build tools disabled)"));
+#endif
 }
 
 // ----------------------------------------------------------

@@ -140,7 +140,17 @@ ADD_EXECUTABLE(${QUCS_NAME}trans MACOSX_BUNDLE WIN32
   ${QUCSTRANS_MOC_SRCS}
   ${RESOURCES_SRCS} )
 
-TARGET_LINK_LIBRARIES( ${QUCS_NAME}trans Qt6::Core Qt6::Gui Qt6::Widgets transcalc )
+TARGET_LINK_LIBRARIES( ${QUCS_NAME}trans PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets transcalc )
+
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME}trans)
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME}trans)
+
 SET_TARGET_PROPERTIES(${QUCS_NAME}trans PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 #INSTALL(TARGETS ${QUCS_NAME}trans DESTINATION bin)

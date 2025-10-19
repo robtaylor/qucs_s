@@ -123,8 +123,16 @@ ADD_EXECUTABLE(${QUCS_NAME}activefilter MACOSX_BUNDLE WIN32
   ${RESOURCES_SRCS} )
 
 
-TARGET_LINK_LIBRARIES(${QUCS_NAME}activefilter Qt6::Core Qt6::Widgets Qt6::Svg Qt6::SvgWidgets)
+TARGET_LINK_LIBRARIES(${QUCS_NAME}activefilter PRIVATE Qt6::Core Qt6::Widgets Qt6::Svg Qt6::SvgWidgets)
 
+# Apply Qt's WebAssembly-specific finalization first
+if(COMMAND qt_finalize_target)
+    qt_finalize_target(${QUCS_NAME}activefilter)
+endif()
+
+# Then apply WebAssembly embind configuration from parent CMakeLists.txt
+# This ensures proper embind linkage for WebAssembly builds
+configure_wasm_executable(${QUCS_NAME}activefilter)
 
 SET_TARGET_PROPERTIES(${QUCS_NAME}activefilter PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 

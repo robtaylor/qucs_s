@@ -22,7 +22,9 @@
 #include <QObject>
 #include <QDateTime>
 
+#if EXTERNAL_DATA_TOOLS
 class QProcess;
+#endif
 class QTextStream;
 class QString;
 
@@ -44,7 +46,9 @@ private:
   bool makeSubcircuit;
   bool insertSim;
   bool changed;
+#if EXTERNAL_DATA_TOOLS
   QProcess *QucsConv, *SpicePrep;
+#endif
   QString NetText, ErrText, NetLine, SimText;
   QTextStream *outstream, *filstream, *prestream;
   QDateTime lastLoaded;

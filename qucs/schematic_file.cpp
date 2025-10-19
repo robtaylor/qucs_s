@@ -807,6 +807,7 @@ int Schematic::saveDocument()
           // need to cd into project to run admsXml?
           QDir::setCurrent(workDir);
 
+#if EXTERNAL_BUILD_TOOLS
           QProcess builder;
           builder.setProcessChannelMode(QProcess::MergedChannels);
 
@@ -825,6 +826,10 @@ int Schematic::saveDocument()
             cmdString = cmdString + builder.readAll();
             QMessageBox::information(this, tr("Status"), cmdString);
           }
+#else
+          QMessageBox::critical(this, tr("Error"),
+                              tr("Build tools not available (external build tools disabled)"));
+#endif
       }
 
 

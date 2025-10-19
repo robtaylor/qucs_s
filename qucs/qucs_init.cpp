@@ -23,7 +23,9 @@
 #include "misc.h"
 #include "qucs.h"
 #include "extsimkernels/spicecompat.h"
+#if EXTERNAL_POSTPROCESSING
 #include "octave_window.h"
+#endif
 
 #include <QAction>
 #include <QShortcut>
@@ -1122,10 +1124,14 @@ void QucsApp::slotToggleDock(bool on)
 // turn Octave Dock Window on or off
 void QucsApp::slotViewOctaveDock(bool toggle)
 {
+#if EXTERNAL_POSTPROCESSING
   octDock->setVisible(toggle);
   if (toggle) {
     octave->startOctave();
   }
+#else
+  Q_UNUSED(toggle);
+#endif
 }
 
 // ----------------------------------------------------------

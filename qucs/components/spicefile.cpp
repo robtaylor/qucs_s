@@ -19,7 +19,9 @@
 # include <unistd.h>
 #endif
 #include <QRegularExpression>
+#if EXTERNAL_DATA_TOOLS
 #include <QProcess>
+#endif
 #include <QString>
 #include <QStringList>
 #include <QMessageBox>
@@ -260,6 +262,7 @@ bool SpiceFile::recreateSubNetlist(QString *SpiceFile, QString *FileName)
   else
     insertSim = false;
 
+#if EXTERNAL_DATA_TOOLS
   // preprocessor run if necessary
   QString preprocessor = Props.at(3)->Value;
   if (preprocessor != "none") {
@@ -295,7 +298,7 @@ bool SpiceFile::recreateSubNetlist(QString *SpiceFile, QString *FileName)
       connect(SpicePrep, SIGNAL(readyReadStandardError()), SLOT(slotGetPrepErr()));
     }
 
-    QMessageBox *MBox = 
+    QMessageBox *MBox =
       new QMessageBox(QMessageBox::NoIcon,
                       QObject::tr("Info"),
                       QObject::tr("Preprocessing SPICE file \"%1\".").arg(*SpiceFile),
@@ -343,6 +346,7 @@ bool SpiceFile::recreateSubNetlist(QString *SpiceFile, QString *FileName)
     }
     *SpiceFile = PrepName;
   }
+#endif // EXTERNAL_SIMULATORS
 
   // begin command line construction
   QString prog;
@@ -365,6 +369,7 @@ bool SpiceFile::recreateSubNetlist(QString *SpiceFile, QString *FileName)
   }
   NetText += "\n";
 
+#if EXTERNAL_DATA_TOOLS
   // startup SPICE conversion process
   QucsConv = new QProcess(this);
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -398,10 +403,16 @@ bool SpiceFile::recreateSubNetlist(QString *SpiceFile, QString *FileName)
   // finish
   QucsConv->waitForFinished();
   delete QucsConv;
+#else
+  // When external simulators are disabled, we cannot use QucsConv
+  ErrText += QObject::tr("ERROR: SPICE file conversion requires external simulators support.");
+  return false;
+#endif // EXTERNAL_SIMULATORS
   lastLoaded = QDateTime::currentDateTime();
   return true;
 }
 
+#if EXTERNAL_DATA_TOOLS
 // -------------------------------------------------------------------------
 void SpiceFile::slotSkipErr()
 {
@@ -479,6 +490,16 @@ void SpiceFile::slotExited()
     }
   }
 }
+#else
+// Stub implementations when EXTERNAL_DATA_TOOLS is disabled
+void SpiceFile::slotSkipErr() {}
+void SpiceFile::slotSkipOut() {}
+void SpiceFile::slotGetPrepErr() {}
+void SpiceFile::slotGetPrepOut() {}
+void SpiceFile::slotGetError() {}
+void SpiceFile::slotGetNetlist() {}
+void SpiceFile::slotExited() {}
+#endif // EXTERNAL_DATA_TOOLS
 
 QString SpiceFile::spice_netlist(spicecompat::SpiceDialect dialect /* = spicecompat::SPICEDefault */)
 {

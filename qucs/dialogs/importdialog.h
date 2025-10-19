@@ -19,7 +19,9 @@
 #define IMPORTDIALOG_H
 
 #include <QDialog>
+#if EXTERNAL_DATA_TOOLS
 #include <QProcess>
+#endif
 #include <QGridLayout>
 #include <QLabel>
 
@@ -61,7 +63,9 @@ private:
   QGridLayout *all;
 
   QLabel *OutputLabel, *LibLabel;
+#if EXTERNAL_DATA_TOOLS
   QProcess Process;
+#endif
   QPlainTextEdit *MsgText;
   QLineEdit *ImportEdit, *OutputEdit, *LibName;
   QPushButton *ImportButt, *CancelButt, *AbortButt;

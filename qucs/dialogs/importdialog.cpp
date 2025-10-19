@@ -130,7 +130,9 @@ ImportDialog::ImportDialog(QWidget *parent)
 
 ImportDialog::~ImportDialog()
 {
+#if EXTERNAL_DATA_TOOLS
   if(Process.state() == QProcess::Running)  Process.kill();
+#endif
   delete all;
 }
 
@@ -183,6 +185,7 @@ void ImportDialog::slotSaveBrowse()
 // ------------------------------------------------------------------------
 void ImportDialog::slotImport()
 {
+#if EXTERNAL_DATA_TOOLS
   MsgText->clear();
   if (OutputEdit->text().isEmpty())
     return;
@@ -206,7 +209,7 @@ void ImportDialog::slotImport()
 
   Program = QucsSettings.Qucsconv;
   CommandLine  << "-if";
-  
+
   switch (InType->currentIndex()) {
   case 0:
       CommandLine << "spice";
@@ -282,9 +285,13 @@ void ImportDialog::slotImport()
   qDebug() << "Command:" << Program << CommandLine.join(" ");
   Process.start(Program, CommandLine);
   Process.waitForStarted();
-  
+
   if(Process.state() != QProcess::Running)
     MsgText->appendPlainText(tr("ERROR: Cannot start converter!"));
+#else
+  MsgText->clear();
+  MsgText->appendPlainText(tr("ERROR: Data conversion requires external simulators support."));
+#endif // EXTERNAL_SIMULATORS
 }
 
 // ------------------------------------------------------------------------
@@ -311,11 +318,14 @@ void ImportDialog::slotType(int index)
 // ------------------------------------------------------------------------
 void ImportDialog::slotAbort()
 {
+#if EXTERNAL_DATA_TOOLS
   if(Process.state() == QProcess::Running)  Process.kill();
+#endif
   AbortButt->setDisabled(true);
   ImportButt->setDisabled(false);
 }
 
+#if EXTERNAL_DATA_TOOLS
 // ------------------------------------------------------------------------
 // Is called when the process sends an output to stdout.
 void ImportDialog::slotDisplayMsg()
@@ -337,7 +347,7 @@ void ImportDialog::slotProcessEnded(int status)
   ImportButt->setDisabled(false);
   AbortButt->setDisabled(true);
 
-  if(status == 0) {    
+  if(status == 0) {
     MsgText->appendPlainText(tr("Successfully converted file!"));
 
     disconnect(CancelButt, SIGNAL(clicked()), 0, 0);
@@ -346,6 +356,12 @@ void ImportDialog::slotProcessEnded(int status)
   else
     MsgText->appendPlainText(tr("Converter ended with errors!"));
 }
+#else
+// Stub implementations when EXTERNAL_DATA_TOOLS is disabled
+void ImportDialog::slotDisplayMsg() {}
+void ImportDialog::slotDisplayErr() {}
+void ImportDialog::slotProcessEnded(int) {}
+#endif // EXTERNAL_DATA_TOOLS
 
 void ImportDialog::slotValidateInput()
 {

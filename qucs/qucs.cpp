@@ -75,9 +75,11 @@
 #include "dialogs/displaydialog.h"
 #include "extsimkernels/externsimdialog.h"
 #include "dialogs/tuner.h"
+#if EXTERNAL_POSTPROCESSING
 #include "octave_window.h"
-#include "printerwriter.h"
 #include "imagewriter.h"
+#endif
+#include "printerwriter.h"
 #include "qucslib_common.h"
 #include "misc.h"
 #include "extsimkernels/verilogawriter.h"
@@ -563,12 +565,14 @@ void QucsApp::initView()
 
   // ----------------------------------------------------------
   // Octave docking window
+#if EXTERNAL_POSTPROCESSING
   octDock = new QDockWidget(tr("Octave Dock"));
 
   connect(octDock, SIGNAL(visibilityChanged(bool)), SLOT(slotToggleOctave(bool)));
   octave = new OctaveWindow(octDock);
   this->addDockWidget(Qt::BottomDockWidgetArea, octDock);
   this->setCorner(Qt::BottomLeftCorner  , Qt::LeftDockWidgetArea);
+#endif
 
   // ............................................
 
@@ -1507,7 +1511,9 @@ void QucsApp::openProject(const QString& Path)
   slotResetWarnings();
 
   QucsSettings.QucsWorkDir.setPath(ProjDir.path());
+#if EXTERNAL_POSTPROCESSING
   octave->adjustDirectory();
+#endif
 
   Content->setProjPath(QucsSettings.QucsWorkDir.absolutePath());
 
@@ -1579,7 +1585,9 @@ void QucsApp::slotMenuProjClose()
   slotResetWarnings();
   setWindowTitle(windowTitle);
   QucsSettings.QucsWorkDir.setPath(QucsSettings.qucsWorkspaceDir.absolutePath());
+#if EXTERNAL_POSTPROCESSING
   octave->adjustDirectory();
+#endif
 
   Content->setProjPath("");
 
@@ -2710,7 +2718,9 @@ void QucsApp::slotSimulate(QWidget *w)
     if(Doc->getDocChanged())
       Doc->save();
     slotViewOctaveDock(true);
+#if EXTERNAL_POSTPROCESSING
     octave->runOctaveScript(Doc->getDocName());
+#endif
     return;
   }
 
@@ -2777,15 +2787,19 @@ void QucsApp::slotAfterSimulation(int Status, SimMessage *sim)
   else {
     if(sim->SimRunScript) {
       // run script
+#if EXTERNAL_POSTPROCESSING
       octave->startOctave();
       octave->runOctaveScript(sim->Script);
+#endif
     }
     if(sim->SimOpenDpl) {
       // switch to data display
       if(sim->DataDisplay.right(2) == ".m" ||
         sim->DataDisplay.right(4) == ".oct") {  // Is it an Octave script?
+#if EXTERNAL_POSTPROCESSING
         octave->startOctave();
         octave->runOctaveScript(sim->DataDisplay);
+#endif
       }
       else
         slotChangePage(sim->DocName, sim->DataDisplay);
@@ -3013,6 +3027,7 @@ void QucsApp::openFileFromProjectView(const QFileInfo &Info, const QString &note
       com = progName.split(" ");
       com << absolutePath;
 
+#if EXTERNAL_POSTPROCESSING
       QProcess *Program = new QProcess();
       QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
       env.insert("PATH", env.value("PATH"));
@@ -3028,6 +3043,7 @@ void QucsApp::openFileFromProjectView(const QFileInfo &Info, const QString &note
                               tr("Cannot start \"%1\"!").arg(absolutePath));
         delete Program;
       }
+#endif
       return;
     }
     it++;
@@ -3645,6 +3661,7 @@ void QucsApp::slotSaveDiagramToGraphicsFile()
 
 void QucsApp::slotSaveSchematicToGraphicsFile(bool diagram)
 {
+#if EXTERNAL_POSTPROCESSING
   ImageWriter *writer = new ImageWriter(lastExportFilename);
   writer->setDiagram(diagram);
   if (!writer->print(DocumentTab->currentWidget())) {
@@ -3652,6 +3669,10 @@ void QucsApp::slotSaveSchematicToGraphicsFile(bool diagram)
     statusBar()->showMessage(QObject::tr("Successfully exported"), 2000);
   }
   delete writer;
+#else
+  Q_UNUSED(diagram);
+  statusBar()->showMessage(QObject::tr("Export not available (external simulators disabled)"), 2000);
+#endif
 }
 
 
@@ -3843,8 +3864,10 @@ void QucsApp::slotAfterSpiceSimulation(ExternSimDialog *SimDlg)
     sch->viewport()->update();
     if(sch->getSimRunScript()) {
       // run script
+#if EXTERNAL_POSTPROCESSING
       octave->startOctave();
       octave->runOctaveScript(sch->getScript());
+#endif
     }
     if (TuningMode) {
         tunerDia->SimulationEnded();
