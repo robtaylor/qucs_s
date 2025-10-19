@@ -174,6 +174,13 @@ QucsApp::QucsApp(bool netlist2Console) :
 
   QDir QucsBinDir(QucsSettings.BinDir);
   if (QucsSettings.firstRun) { // try to find Ngspice
+#if NGSPICE_SHARED
+      // When using ngspice shared library, no external simulator executable is needed
+      QucsSettings.DefaultSimulator = spicecompat::simNgspice;
+      QucsSettings.NgspiceExecutable = ""; // Not used in shared library mode
+      fillSimulatorsComboBox();
+      QucsSettings.firstRun = false;
+#else
       QString ngspice_exe_name = "ngspice";
 #ifdef Q_OS_WIN
       ngspice_exe_name+="_con";
@@ -249,6 +256,7 @@ QucsApp::QucsApp(bool netlist2Console) :
           slotSimSettings();
       }
       QucsSettings.firstRun = false;
+#endif
   } else {
       if (!QucsSettings.Qucsator.contains("qucsator_rf")) {
           QucsSettings.Qucsator = QStandardPaths::findExecutable("qucsator_rf",{QucsBinDir.absolutePath()});
